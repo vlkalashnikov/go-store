@@ -23,7 +23,7 @@ func (l *Local) CreateFile(path string, file []byte) error {
 }
 
 func (l *Local) GetFile(path string) ([]byte, error) {
-	if l.IsExist(path) == false {
+	if !l.IsExist(path) {
 		return nil, nil
 	}
 	return os.ReadFile(path)
@@ -31,7 +31,7 @@ func (l *Local) GetFile(path string) ([]byte, error) {
 
 // State can return default value
 func (l *Local) State(path string) (os.FileInfo, error) {
-	if l.IsExist(path) == false {
+	if !l.IsExist(path) {
 		return nil, nil
 	}
 	return os.Stat(path)

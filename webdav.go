@@ -26,7 +26,7 @@ func (w *WebDav) CreateFile(path string, file []byte) error {
 }
 
 func (w *WebDav) GetFile(path string) ([]byte, error) {
-	if w.IsExist(path) == false {
+	if !w.IsExist(path) {
 		return nil, nil
 	}
 	return w.client.Read(path)
@@ -34,7 +34,7 @@ func (w *WebDav) GetFile(path string) ([]byte, error) {
 
 // State can return default value
 func (w *WebDav) State(path string) (os.FileInfo, error) {
-	if w.IsExist(path) == false {
+	if !w.IsExist(path) {
 		return nil, nil
 	}
 	return w.client.Stat(path)

@@ -8,6 +8,7 @@ import (
 const (
 	localStore  = "local"
 	webDavStore = "webdav"
+	empty       = "empty"
 	perm        = 0644
 )
 
@@ -38,6 +39,8 @@ func New(cfg Config) (StoreIFace, error) {
 		s = new(Local)
 	case webDavStore:
 		s = new(WebDav)
+	case empty:
+		s = new(Empty)
 	default:
 		return nil, errors.New("unknown store type")
 	}
