@@ -7,24 +7,23 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 type S3 struct {
 	client   *s3.S3
-	S3Region string
 	S3Bucket *string
-	S3Access string
-	S3Secret string
 }
 
 func (s *S3) init(cfg Config) error {
-	s.client = s3.New(session.Must(session.NewSession()))
-	s.S3Region = cfg.S3Region
+	awsConf := aws.NewConfig()
+	awsConf.WithRegion(cfg.S3Region)
+	awsConf.Credentials = credentials.NewStaticCredentials(cfg.S3AccessKeyID, cfg.S3AccessKey, "")
+
+	s.client = s3.New(session.Must(session.NewSession(awsConf)))
 	s.S3Bucket = aws.String(cfg.S3Bucket)
-	s.S3Access = cfg.S3Access
-	s.S3Secret = cfg.S3Secret
 	return nil
 }
 

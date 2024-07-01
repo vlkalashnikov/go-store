@@ -27,14 +27,14 @@ type StoreIFace interface {
 }
 
 type Config struct {
-	StoreType  string
-	WebDavHost string
-	WebDavUser string
-	WebDavPass string
-	S3Region   string
-	S3Bucket   string
-	S3Access   string
-	S3Secret   string
+	StoreType     string
+	WebDavHost    string
+	WebDavUser    string
+	WebDavPass    string
+	S3Region      string
+	S3Bucket      string
+	S3AccessKeyID string
+	S3AccessKey   string
 }
 
 func New(cfg Config) (StoreIFace, error) {
