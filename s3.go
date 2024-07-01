@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -32,7 +33,16 @@ func (s *S3) IsExist(filePath string) bool {
 		Bucket: s.S3Bucket,
 		Key:    aws.String(filePath),
 	})
-	return err == nil
+
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "NotFound" {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func (s *S3) CreateFile(path string, file []byte) error {
