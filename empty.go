@@ -17,6 +17,10 @@ func (l *Empty) CreateFile(path string, file []byte) error {
 	return nil
 }
 
+func (l *Empty) RemoveFile(path string) error {
+	return nil
+}
+
 func (l *Empty) GetFile(path string) ([]byte, error) {
 	return nil, nil
 }

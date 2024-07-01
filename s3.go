@@ -63,6 +63,15 @@ func (s *S3) GetFile(path string) ([]byte, error) {
 	return io.ReadAll(out.Body)
 }
 
+func (s *S3) RemoveFile(path string) error {
+	_, err := s.client.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: s.S3Bucket,
+		Key:    aws.String(path),
+	})
+
+	return err
+}
+
 // State can return default value???????
 func (s *S3) State(path string) (os.FileInfo, error) {
 	_, err := s.client.HeadObject(&s3.HeadObjectInput{

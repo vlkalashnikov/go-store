@@ -32,6 +32,10 @@ func (w *WebDav) GetFile(path string) ([]byte, error) {
 	return w.client.Read(path)
 }
 
+func (w *WebDav) RemoveFile(path string) error {
+	return w.client.Remove(path)
+}
+
 // State can return default value
 func (w *WebDav) State(path string) (os.FileInfo, error) {
 	if !w.IsExist(path) {

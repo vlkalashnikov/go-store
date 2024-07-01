@@ -29,6 +29,10 @@ func (l *Local) GetFile(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
+func (l *Local) RemoveFile(path string) error {
+	return os.Remove(path)
+}
+
 // State can return default value
 func (l *Local) State(path string) (os.FileInfo, error) {
 	if !l.IsExist(path) {

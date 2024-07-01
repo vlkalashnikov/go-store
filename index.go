@@ -14,15 +14,16 @@ const (
 )
 
 type StoreIFace interface {
-	init(cfg Config) error
-	IsExist(filePath string) bool
-	CreateFile(path string, file []byte) error
+	init(Config) error
+	IsExist(string) bool
+	CreateFile(string, []byte) error
 	GetFile(path string) ([]byte, error)
-	CreateJsonFile(path string, data interface{}) error
-	ClearDir(path string) error
-	GetJsonFile(path string, file interface{}) error
-	State(path string) (os.FileInfo, error)
-	MkdirAll(path string) error
+	RemoveFile(path string) error
+	CreateJsonFile(string, interface{}) error
+	ClearDir(string) error
+	GetJsonFile(string, interface{}) error
+	State(string) (os.FileInfo, error)
+	MkdirAll(string) error
 }
 
 type Config struct {
