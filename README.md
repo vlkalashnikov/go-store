@@ -1,9 +1,9 @@
 # go-store
-os vs webdav
+os, webdav, s3
 
 
 ##### Интерфейс для работы с файлами
-Переменная **STORE_TYPE** определяет с каким хранилищем работает сервис - webdav либо локальная директория
+Переменная **STORE_TYPE** определяет с каким хранилищем работает сервис - webdav, s3 либо локальная директория
 ```go
 type StoreIFace interface {
 	Init(cfg Config) error

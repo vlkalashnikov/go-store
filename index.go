@@ -8,6 +8,7 @@ import (
 const (
 	localStore  = "local"
 	webDavStore = "webdav"
+	s3Store     = "s3"
 	empty       = "empty"
 	perm        = 0644
 )
@@ -29,20 +30,55 @@ type Config struct {
 	WebDavHost string
 	WebDavUser string
 	WebDavPass string
+	S3Region   string
+	S3Bucket   string
+	S3Access   string
+	S3Secret   string
 }
 
 func New(cfg Config) (StoreIFace, error) {
-	var s StoreIFace
-
 	switch cfg.StoreType {
 	case localStore:
-		s = new(Local)
+		return NewLocal(cfg)
 	case webDavStore:
-		s = new(WebDav)
+		return NewWebDav(cfg)
+	case s3Store:
+		return NewS3(cfg)
 	case empty:
-		s = new(Empty)
+		return NewEmpty(cfg)
 	default:
 		return nil, errors.New("unknown store type")
 	}
-	return s, s.init(cfg)
+}
+
+func NewEmpty(cfg Config) (StoreIFace, error) {
+	s := new(Empty)
+	if err := s.init(cfg); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func NewLocal(cfg Config) (StoreIFace, error) {
+	s := new(Local)
+	if err := s.init(cfg); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func NewWebDav(cfg Config) (StoreIFace, error) {
+	s := new(WebDav)
+	if err := s.init(cfg); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func NewS3(cfg Config) (StoreIFace, error) {
+	s := new(S3)
+	if err := s.init(cfg); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
