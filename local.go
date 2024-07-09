@@ -9,7 +9,7 @@ import (
 type Local struct {
 }
 
-func (l *Local) init(cfg Config) error {
+func (l *Local) init(cfg LocalConfig) error {
 	return nil
 }
 

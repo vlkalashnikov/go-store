@@ -11,7 +11,7 @@ type WebDav struct {
 	client *gowebdav.Client
 }
 
-func (w *WebDav) init(cfg Config) error {
+func (w *WebDav) init(cfg WebDavConfig) error {
 	w.client = gowebdav.NewClient(cfg.WebDavHost, cfg.WebDavUser, cfg.WebDavPass)
 	return nil
 }

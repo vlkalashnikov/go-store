@@ -18,10 +18,10 @@ type S3 struct {
 	S3Bucket *string
 }
 
-func (s *S3) init(cfg Config) error {
+func (s *S3) init(cfg S3Config) error {
 	awsConf := aws.NewConfig()
 	awsConf.WithRegion(cfg.S3Region)
-	awsConf.Credentials = credentials.NewStaticCredentials(cfg.S3AccessKeyID, cfg.S3AccessKey, "")
+	awsConf.Credentials = credentials.NewStaticCredentials(cfg.S3AccessKeyID, cfg.S3AccessKey, cfg.S3Token)
 
 	s.client = s3.New(session.Must(session.NewSession(awsConf)))
 	s.S3Bucket = aws.String(cfg.S3Bucket)
@@ -40,6 +40,7 @@ func (s *S3) IsExist(filePath string) bool {
 				return false
 			}
 		}
+		return false
 	}
 
 	return true
@@ -56,10 +57,6 @@ func (s *S3) CreateFile(path string, file []byte) error {
 }
 
 func (s *S3) GetFile(path string) ([]byte, error) {
-	if !s.IsExist(path) {
-		return nil, nil
-	}
-
 	out, err := s.client.GetObject(&s3.GetObjectInput{
 		Bucket: s.S3Bucket,
 		Key:    aws.String(path),
@@ -81,14 +78,9 @@ func (s *S3) RemoveFile(path string) error {
 	return err
 }
 
-// State can return default value???????
+// Temporarily return nil, nil
 func (s *S3) State(path string) (os.FileInfo, error) {
-	_, err := s.client.HeadObject(&s3.HeadObjectInput{
-		Bucket: s.S3Bucket,
-		Key:    aws.String(path),
-	})
-
-	return nil, err
+	return nil, nil
 }
 
 func (s *S3) ClearDir(path string) error {

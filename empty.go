@@ -5,7 +5,7 @@ import "os"
 type Empty struct {
 }
 
-func (l *Empty) init(cfg Config) error {
+func (l *Empty) init(cfg EmptyConfig) error {
 	return nil
 }
 
