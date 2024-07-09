@@ -10,7 +10,7 @@ const (
 	webDavStore = "webdav"
 	s3Store     = "s3"
 	empty       = "empty"
-	perm        = 0644
+	perm        = 0666
 )
 
 type StoreConfigIFace interface {
