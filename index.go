@@ -21,11 +21,12 @@ type StoreIFace interface {
 	IsExist(string) bool
 	CreateFile(string, []byte) error
 	GetFile(path string) ([]byte, error)
+	GetFilePartially(path string, offset, length int64) ([]byte, error)
 	RemoveFile(path string) error
 	CreateJsonFile(string, interface{}) error
 	ClearDir(string) error
 	GetJsonFile(string, interface{}) error
-	State(string) (os.FileInfo, error)
+	Stat(string) (os.FileInfo, error)
 	MkdirAll(string) error
 }
 

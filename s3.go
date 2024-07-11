@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -69,6 +70,30 @@ func (s *S3) GetFile(path string) ([]byte, error) {
 	return io.ReadAll(out.Body)
 }
 
+func (s *S3) GetFilePartially(path string, offset, length int64) ([]byte, error) {
+	_range := ""
+
+	if length > 0 {
+		_range = fmt.Sprintf("bytes=%d-%d", offset, offset+length-1)
+	} else {
+		_range = fmt.Sprintf("bytes=%d-", offset)
+	}
+
+	out, err := s.client.GetObject(&s3.GetObjectInput{
+		Bucket: s.S3Bucket,
+		Key:    aws.String(path),
+		Range:  aws.String(_range),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer out.Body.Close()
+
+	return io.ReadAll(out.Body)
+}
+
 func (s *S3) RemoveFile(path string) error {
 	_, err := s.client.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: s.S3Bucket,
@@ -79,7 +104,7 @@ func (s *S3) RemoveFile(path string) error {
 }
 
 // Temporarily return nil, nil
-func (s *S3) State(path string) (os.FileInfo, error) {
+func (s *S3) Stat(path string) (os.FileInfo, error) {
 	return nil, nil
 }
 

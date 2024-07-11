@@ -25,7 +25,11 @@ func (l *Empty) GetFile(path string) ([]byte, error) {
 	return nil, nil
 }
 
-func (l *Empty) State(path string) (os.FileInfo, error) {
+func (l *Empty) GetFilePartially(path string, offset, length int64) ([]byte, error) {
+	return nil, nil
+}
+
+func (l *Empty) Stat(path string) (os.FileInfo, error) {
 	return nil, nil
 }
 

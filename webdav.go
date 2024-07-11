@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 
@@ -32,15 +33,31 @@ func (w *WebDav) GetFile(path string) ([]byte, error) {
 	return w.client.Read(path)
 }
 
+func (w *WebDav) GetFilePartially(path string, offset, length int64) ([]byte, error) {
+	if !w.IsExist(path) {
+		return nil, nil
+	}
+
+	stream, err := w.client.ReadStreamRange(path, offset, length)
+	if err != nil {
+		return nil, err
+	}
+	defer stream.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(stream)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 func (w *WebDav) RemoveFile(path string) error {
 	return w.client.Remove(path)
 }
 
 // State can return default value
-func (w *WebDav) State(path string) (os.FileInfo, error) {
-	if !w.IsExist(path) {
-		return nil, nil
-	}
+func (w *WebDav) Stat(path string) (os.FileInfo, error) {
 	return w.client.Stat(path)
 }
 
