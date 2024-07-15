@@ -1,49 +1,54 @@
 package store
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"os"
+
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 const (
-	localStore  = "local"
-	webDavStore = "webdav"
-	s3Store     = "s3"
-	empty       = "empty"
+	LocalStore  = "local"
+	WebDavStore = "webdav"
+	S3Store     = "s3"
+	EmptyStore  = "empty"
 	perm        = 0777
+	META_PREFIX = ".meta"
 )
 
 type StoreConfigIFace interface {
-	S3Config | WebDavConfig | EmptyConfig | LocalConfig
+	aws.Config | WebDavConfig | EmptyConfig | LocalConfig
 }
 
 type StoreIFace interface {
 	IsExist(string) bool
-	CreateFile(string, []byte) error
+	CreateFile(string, []byte, map[string]string) error
+	StreamToFile(stream io.Reader, path string) error
 	GetFile(path string) ([]byte, error)
 	GetFilePartially(path string, offset, length int64) ([]byte, error)
+	FileReader(path string, offset, length int64) (io.ReadCloser, error)
 	RemoveFile(path string) error
-	CreateJsonFile(string, interface{}) error
+	CreateJsonFile(string, interface{}, map[string]string) error
 	ClearDir(string) error
 	GetJsonFile(string, interface{}) error
-	Stat(string) (os.FileInfo, error)
+	Stat(string) (os.FileInfo, map[string]string, error)
 	MkdirAll(string) error
 }
 
 type Config struct {
-	StoreType string
-	EmptyConfig
-	LocalConfig
-	WebDavConfig
-	S3Config
+	StoreType    string
+	EmptyConfig  EmptyConfig
+	LocalConfig  LocalConfig
+	WebDavConfig WebDavConfig
+	S3Config     S3Config
 }
 
 type S3Config struct {
-	S3Region      string
-	S3Bucket      string
-	S3AccessKeyID string
-	S3AccessKey   string
-	S3Token       string
+	S3Bucket string
+	aws.Config
 }
 
 type WebDavConfig struct {
@@ -57,13 +62,13 @@ type LocalConfig struct{}
 
 func New(cfg Config) (StoreIFace, error) {
 	switch cfg.StoreType {
-	case localStore:
+	case LocalStore:
 		return NewLocal(cfg.LocalConfig)
-	case webDavStore:
+	case WebDavStore:
 		return NewWebDav(cfg.WebDavConfig)
-	case s3Store:
+	case S3Store:
 		return NewS3(cfg.S3Config)
-	case empty:
+	case EmptyStore:
 		return NewEmpty(cfg.EmptyConfig)
 	default:
 		return nil, errors.New("unknown store type")
@@ -100,4 +105,37 @@ func NewS3(cfg S3Config) (StoreIFace, error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+// Что такое метаданные файла и для чего они нужны?
+// Метаданные файла - это информация о файле, которая не является его содержимым.
+// Данная информация является дополнительной, на усмотрение разработчика.
+// Т.к AWS S3 поддерживает метаданные из коробки, то для остальных хранилищ их приходится хранить в отдельном файле.
+// Мета-файл создается вместе с основным файлом и имеет расширение .meta
+// Для хранения метаданных используется формат key=value, где key - название метаданных, value - значение метаданных
+// При удалении основного файла, удаляется и мета-файл
+
+// meta2Bytes - преобразует метаданные в байты
+func meta2Bytes(meta map[string]string) []byte {
+	b := new(bytes.Buffer)
+	for key, value := range meta {
+		fmt.Fprintf(b, "%s=%s\n", key, value)
+	}
+	return b.Bytes()
+}
+
+// bytes2Meta - преобразует байты в метаданные
+func bytes2Meta(b []byte) map[string]string {
+	meta := make(map[string]string)
+	for _, line := range bytes.Split(b, []byte{'\n'}) {
+		if len(line) == 0 {
+			continue
+		}
+		pair := bytes.Split(line, []byte{'='})
+		if len(pair) != 2 {
+			continue
+		}
+		meta[string(pair[0])] = string(pair[1])
+	}
+	return meta
 }

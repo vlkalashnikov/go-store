@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"os"
 
 	"github.com/studio-b12/gowebdav"
@@ -17,15 +18,36 @@ func (w *WebDav) init(cfg WebDavConfig) error {
 	return nil
 }
 
+// IsExist - проверяет существование файла
+// filePath - путь к файлу
 func (w *WebDav) IsExist(filePath string) bool {
 	info, err := w.client.Stat(filePath)
 	return err == nil && info.Size() > 0
 }
 
-func (w *WebDav) CreateFile(path string, file []byte) error {
+// CreateFile - создает файл
+// path - путь к файлу
+// file - содержимое файла
+// meta - метаданные файла
+func (w *WebDav) CreateFile(path string, file []byte, meta map[string]string) error {
+	if meta != nil {
+		if err := w.client.Write(path+META_PREFIX, meta2Bytes(meta), perm); err != nil {
+			return err
+		}
+	}
+
 	return w.client.Write(path, file, perm)
 }
 
+// StreamToFile - записывает содержимое потока в файл
+// stream - поток
+// path - путь к файлу
+func (w *WebDav) StreamToFile(stream io.Reader, path string) error {
+	return w.client.WriteStream(path, stream, perm)
+}
+
+// GetFile - возвращает содержимое файла
+// path - путь к файлу
 func (w *WebDav) GetFile(path string) ([]byte, error) {
 	if !w.IsExist(path) {
 		return nil, nil
@@ -33,6 +55,10 @@ func (w *WebDav) GetFile(path string) ([]byte, error) {
 	return w.client.Read(path)
 }
 
+// GetFilePartially - возвращает часть содержимого файла
+// path - путь к файлу
+// offset - смещение
+// length - длина
 func (w *WebDav) GetFilePartially(path string, offset, length int64) ([]byte, error) {
 	if !w.IsExist(path) {
 		return nil, nil
@@ -52,15 +78,44 @@ func (w *WebDav) GetFilePartially(path string, offset, length int64) ([]byte, er
 	return buf.Bytes(), nil
 }
 
+// FileReader - возвращает io.ReadCloser для чтения файла
+// path - путь к файлу
+// offset - смещение
+// length - длина
+func (w *WebDav) FileReader(path string, offset, length int64) (io.ReadCloser, error) {
+	return w.client.ReadStreamRange(path, offset, length)
+}
+
+// RemoveFile - удаляет файл
+// path - путь к файлу
 func (w *WebDav) RemoveFile(path string) error {
+	w.client.Remove(path + META_PREFIX)
 	return w.client.Remove(path)
 }
 
-// State can return default value
-func (w *WebDav) Stat(path string) (os.FileInfo, error) {
-	return w.client.Stat(path)
+// Stat - возвращает информацию о файле и метаданные
+// path - путь к файлу
+func (w *WebDav) Stat(path string) (os.FileInfo, map[string]string, error) {
+	info, err := w.client.Stat(path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	isExist := w.IsExist(path + META_PREFIX)
+	if !isExist {
+		return info, nil, nil
+	}
+
+	meta, err := w.client.Read(path + META_PREFIX)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return info, bytes2Meta(meta), nil
 }
 
+// ClearDir - очищает директорию
+// path - путь к директории
 func (w *WebDav) ClearDir(path string) error {
 	files, _ := w.client.ReadDir(path)
 	for _, file := range files {
@@ -71,18 +126,27 @@ func (w *WebDav) ClearDir(path string) error {
 	return nil
 }
 
+// MkdirAll - создает директорию
+// path - путь к директории
 func (w *WebDav) MkdirAll(path string) error {
 	return w.client.MkdirAll(path, perm)
 }
 
-func (w *WebDav) CreateJsonFile(path string, data interface{}) error {
+// CreateJsonFile - создает файл с данными в формате JSON
+// path - путь к файлу
+// data - данные
+// meta - метаданные
+func (w *WebDav) CreateJsonFile(path string, data interface{}, meta map[string]string) error {
 	content, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
-	return w.CreateFile(path, content)
+	return w.CreateFile(path, content, meta)
 }
 
+// GetJsonFile - возвращает данные из файла в формате JSON
+// path - путь к файлу
+// file - переменная для записи данных
 func (w *WebDav) GetJsonFile(path string, file interface{}) error {
 	content, err := w.GetFile(path)
 	if err != nil {

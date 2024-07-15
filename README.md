@@ -6,12 +6,17 @@ os, webdav, s3
 Переменная **STORE_TYPE** определяет с каким хранилищем работает сервис - webdav, s3 либо локальная директория
 ```go
 type StoreIFace interface {
-	Init(cfg Config) error
-	IsExist(filePath string) bool
-	CreateFile(path string, file []byte) error
+	IsExist(string) bool
+	CreateFile(string, []byte, map[string]*string) error
+	StreamToFile(stream io.Reader, path string) error
 	GetFile(path string) ([]byte, error)
-	CreateJsonFile(path string, data interface{}) error
-	GetJsonFile(path string, file interface{}) error
-	MkdirAll(path string) error
+	GetFilePartially(path string, offset, length int64) ([]byte, error)
+	FileReader(path string, offset, length int64) (io.ReadCloser, error)
+	RemoveFile(path string) error
+	CreateJsonFile(string, interface{}, map[string]*string) error
+	ClearDir(string) error
+	GetJsonFile(string, interface{}) error
+	Stat(string) (os.FileInfo, map[string]*string, error)
+	MkdirAll(string) error
 }
 ```
